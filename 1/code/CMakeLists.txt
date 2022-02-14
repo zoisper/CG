@@ -5,6 +5,8 @@ PROJECT(class1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(OpenGL_GL_PREFERENCE GLVND)
+
 add_executable(${PROJECT_NAME} main.final.cpp)
 
 find_package(OpenGL REQUIRED)
