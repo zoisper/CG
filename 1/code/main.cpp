@@ -63,7 +63,7 @@ void renderScene(void)
 	
 	// set camera
 	glLoadIdentity();
-	gluLookAt(2.0f, 2.0f, 2.0f,
+	gluLookAt(0.0f, 0.0f, 5.0f,
 		0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f);
 
