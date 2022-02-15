@@ -7,7 +7,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 
-add_executable(${PROJECT_NAME} main.final.cpp)
+add_executable(${PROJECT_NAME} main.cpp)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
