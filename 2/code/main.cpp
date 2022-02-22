@@ -10,7 +10,7 @@
 #define ROTATION 15
 
 
-float ox = 0, oy = 0, oz = 0 , ax = 0, ay = 0 , az = 0 , angle = 0 , sx = 1, sy = 1, sz = 1;
+float ox = 0, oy = 0, oz = 0  , angle = 0 , sx = 1, sy = 1, sz = 1;
 
 int width = 800, height = 800, mode = GL_FILL;
 
