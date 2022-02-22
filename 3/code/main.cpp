@@ -6,6 +6,13 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#define DISPLACEMENT 0.1
+#define ROTATION 15
+
+
+float ox = 0, oy = 0, oz = 0 , angle = 0;
+int mode = GL_LINE, rota = 0;
+
 
 void changeSize(int w, int h) {
 
@@ -33,11 +40,58 @@ void changeSize(int w, int h) {
 }
 
 
-void drawCylinder(float radius, float height, int slices) {
+void drawCylinder( float radius, float height, int slices) {
 
 // put code to draw cylinder in here
 
+    //TOP
+    float arc = M_PI * 2 / slices;
+    float x,y,z;
+
+
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3d(0,height,0);
+
+    for(int i=0; i<=slices; i++){
+        x = (float) (radius * sin(1.0*i*arc));
+        y = height;
+        z = (float) (radius * cos(1.0*i*arc));
+        glVertex3f(x,y,z);
+    }
+    glEnd();
+
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i<=slices; i++){
+        x = (float) (radius * sin(1.0*i*arc));
+        z = (float) (radius * cos(1.0*i*arc));
+        glVertex3f(x,height,z);
+        x = (float) (radius * sin(1.0*i*arc +arc/2));
+        z = (float) (radius * cos(1.0*i*arc + arc/2));
+        glVertex3f(x,0,z);
+    }
+    glEnd();
+
+    //BASE
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3d(0,0,0);
+    for(int i=slices; i>=0; i--){
+        x = (float) (radius * sin(1.0*i*arc));
+        y = 0;
+        z = (float) (radius * cos(1.0*i*arc));
+        glVertex3f(x,y,z);
+    }
+    glEnd();
+
 }
+
+
+
+
+
+
+
+
+
 
 
 void renderScene(void) {
@@ -50,7 +104,16 @@ void renderScene(void) {
 	gluLookAt(5.0,5.0,5.0, 
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
+    glTranslatef(ox,oy,oz);
+    glRotatef(angle,0,1,0);
+    if(rota==1){
+        glRotatef(glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
+    }
+    else if(rota==-1){
+        glRotatef(- glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
+    }
 
+    glPolygonMode(GL_FRONT, mode);
 	drawCylinder(1,2,10);
 
 	// End of frame
@@ -61,6 +124,56 @@ void renderScene(void) {
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
+    switch (c) {
+        case 'a':
+            ox -= DISPLACEMENT;
+            break;
+        case 'd':
+            ox += DISPLACEMENT;
+            break;
+        case 'w':
+            oz -= DISPLACEMENT;
+            break;
+        case 's':
+            oz += DISPLACEMENT;
+            break;
+        case 'S':
+            oy -= DISPLACEMENT;
+            break;
+        case 'W':
+            oy += DISPLACEMENT;
+            break;
+        case 'e':
+            angle += ROTATION;
+            break;
+        case 'q':
+            angle -= ROTATION;
+            break;
+        case 'f':
+            mode = GL_FILL;
+            break;
+        case 'l':
+            mode = GL_LINE;
+            break;
+        case 'p':
+            mode = GL_POINT;
+            break;
+        case ' ':
+            rota = 0;
+            break;
+        case 'r':
+            angle = 0;
+            ox = 0;
+            oy = 0;
+            oz = 0;
+            rota = 0;
+            mode = 0;
+        default:
+            break;
+
+    }
+    //glutPostRedisplay();
+
 
 }
 
@@ -68,6 +181,17 @@ void processKeys(unsigned char c, int xx, int yy) {
 void processSpecialKeys(int key, int xx, int yy) {
 
 // put code to process special keys in here
+    switch (key) {
+        case GLUT_KEY_RIGHT:
+            rota = 1;
+            break;
+        case GLUT_KEY_LEFT:
+            rota = -1;
+            break;
+        default:
+            break;
+
+    }
 
 }
 
@@ -79,10 +203,11 @@ int main(int argc, char **argv) {
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(800,800);
-	glutCreateWindow("CG@DI-UM");
+	glutCreateWindow("Cylinder");
 		
 // Required callback registry 
 	glutDisplayFunc(renderScene);
+    glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
 	
 // Callback registration for keyboard processing
@@ -92,7 +217,8 @@ int main(int argc, char **argv) {
 //  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	
+
+
 // enter GLUT's main cycle
 	glutMainLoop();
 	
