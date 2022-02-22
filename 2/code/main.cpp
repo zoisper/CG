@@ -12,6 +12,8 @@
 
 float ox = 0, oy = 0, oz = 0 , ax = 0, ay = 0 , az = 0 , angle = 0 , sx = 1, sy = 1, sz = 1;
 
+int width = 800, height = 800, mode = GL_FILL;
+
 void changeSize(int w, int h) {
 
 	// Prevent a divide by zero, when window is too short
@@ -21,6 +23,9 @@ void changeSize(int w, int h) {
 
 	// compute window's aspect ratio 
 	float ratio = w * 1.0 / h;
+    width = w;
+    height = h;
+
 
 	// Set the projection matrix as current
 	glMatrixMode(GL_PROJECTION);
@@ -50,11 +55,13 @@ void renderScene(void) {
 			  0.0f,1.0f,0.0f);
 
 // put the geometric transformations here
+    glScalef(sx,sy,sz);
     glTranslatef(ox,oy,oz);
     glRotatef(angle,0,1,0);
-    glScalef(sx,sy,sz);
 
 // put drawing instructions here
+
+    glPolygonMode(GL_FRONT, mode);
     glBegin(GL_TRIANGLES);
 
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -124,6 +131,7 @@ void keyboardFunc (unsigned char key, int x, int y){
             break;
         case 'x':
             sx -= SCALE;
+            break;
         case'Y':
             sy += SCALE;
             break;
@@ -145,6 +153,15 @@ void keyboardFunc (unsigned char key, int x, int y){
             sy -= SCALE;
             sz -= SCALE;
             break;
+        case 'l':
+            mode = GL_LINE;
+            break;
+        case 'f':
+            mode = GL_FILL;
+            break;
+        case 'p':
+            mode = GL_POINT;
+            break;
         case 'r':
             ox = 0;
             oy = 0;
@@ -153,6 +170,8 @@ void keyboardFunc (unsigned char key, int x, int y){
             sx = 1;
             sy = 1;
             sz = 1;
+            mode = GL_FILL;
+            break;
         default:
             break;
     }
@@ -193,6 +212,21 @@ void mouseFunc (int button, int state, int x, int y){
     glutPostRedisplay();
 }
 
+void passiveMouseFunc(int x, int y){
+    if(x> width/2 && y > height/2)
+        glClearColor(0.5f, 0.0f, 0.5f, 0.0f);
+    else if(x>width/2 && y<height/2)
+        glClearColor(0.0f, 0.5f, 0.5f, 0.0f);
+    else if(width/2 && y<height/2)
+        glClearColor(0.5f, 0.5f, 0.0f, 0.0f);
+    else if(x<width/2 && y>height/2)
+        glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+    else
+        glClearColor(0.0f,0.0f,0.0f,0.0f);
+
+    glutPostRedisplay();
+}
+
 
 
 
@@ -222,6 +256,7 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(keyboardFunc);
     glutSpecialFunc(specialFunc);
     glutMouseFunc(mouseFunc);
+    glutPassiveMotionFunc(passiveMouseFunc);
 
 
 
