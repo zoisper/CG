@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 PROJECT(class3)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(OpenGL_GL_PREFERENCE GLVND)
 
 add_executable(${PROJECT_NAME} main.cpp)
 

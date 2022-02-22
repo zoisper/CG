@@ -11,7 +11,7 @@
 
 
 float ox = 0, oy = 0, oz = 0 , angle = 0;
-int mode = GL_LINE, rota = 0;
+int mode = GL_LINE, rota = 0, blink = 0;
 
 
 void changeSize(int w, int h) {
@@ -45,6 +45,7 @@ void drawCylinder( float radius, float height, int slices) {
 // put code to draw cylinder in here
 
     //TOP
+
     float arc = M_PI * 2 / slices;
     float x,y,z;
 
@@ -56,7 +57,10 @@ void drawCylinder( float radius, float height, int slices) {
         x = (float) (radius * sin(1.0*i*arc));
         y = height;
         z = (float) (radius * cos(1.0*i*arc));
+        glColor3f(float(sin(i)),float(cos(i)),float(tan(i)));
         glVertex3f(x,y,z);
+
+
     }
     glEnd();
 
@@ -67,6 +71,7 @@ void drawCylinder( float radius, float height, int slices) {
         glVertex3f(x,height,z);
         x = (float) (radius * sin(1.0*i*arc +arc/2));
         z = (float) (radius * cos(1.0*i*arc + arc/2));
+        glColor3f(float(sin(i)),float(cos(i)),float(tan(i)));
         glVertex3f(x,0,z);
     }
     glEnd();
@@ -78,18 +83,12 @@ void drawCylinder( float radius, float height, int slices) {
         x = (float) (radius * sin(1.0*i*arc));
         y = 0;
         z = (float) (radius * cos(1.0*i*arc));
+        glColor3f(float(sin(i-slices)),float(cos(i-slices)),float(tan(i-slices)));
         glVertex3f(x,y,z);
     }
     glEnd();
 
 }
-
-
-
-
-
-
-
 
 
 
@@ -107,11 +106,22 @@ void renderScene(void) {
     glTranslatef(ox,oy,oz);
     glRotatef(angle,0,1,0);
     if(rota==1){
-        glRotatef(glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
+        glRotatef(float(glutGet(GLUT_ELAPSED_TIME) / 20 % 360), 0.0, 1.0, 0.0);
     }
     else if(rota==-1){
-        glRotatef(- glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
+        glRotatef(float(- glutGet(GLUT_ELAPSED_TIME) / 20 % 360), 0.0, 1.0, 0.0);
     }
+
+    if(blink ==1){
+        int m = int(glutGet(GLUT_ELAPSED_TIME))%15;
+        if(m <5)
+            mode = GL_LINE;
+        else if(m>=5 && m<10 )
+            mode = GL_POINT;
+        else
+            mode = GL_FILL;
+    }
+
 
     glPolygonMode(GL_FRONT, mode);
 	drawCylinder(1,2,10);
@@ -151,15 +161,21 @@ void processKeys(unsigned char c, int xx, int yy) {
             break;
         case 'f':
             mode = GL_FILL;
+            blink = 0;
             break;
         case 'l':
             mode = GL_LINE;
+            blink = 0;
             break;
         case 'p':
             mode = GL_POINT;
+            blink = 0;
             break;
         case ' ':
             rota = 0;
+            break;
+        case 'b':
+            blink= 1;
             break;
         case 'r':
             angle = 0;
@@ -167,7 +183,8 @@ void processKeys(unsigned char c, int xx, int yy) {
             oy = 0;
             oz = 0;
             rota = 0;
-            mode = 0;
+            blink = 0;
+            mode = GL_LINE;
         default:
             break;
 
