@@ -12,7 +12,7 @@
 
 
 float ox = 0, oy = 0, oz = 0 , angle = 0;
-int mode = GL_LINE, rota = 0, blink = 0, speed = 5, max_speed = 15;
+int mode = GL_LINE, rota = 0,  rx = 0, ry =1, rz =0, blink = 0, speed = 5, max_speed = 15;
 
 
 void changeSize(int w, int h) {
@@ -45,27 +45,24 @@ void drawCylinder( float radius, float height, int slices) {
 
 // put code to draw cylinder in here
 
-    //TOP
 
     float arc = M_PI * 2 / slices;
-    float x,y,z;
+    float x, z, next_x, next_z;
+    int c;
 
-
+    //TOP
     glBegin(GL_TRIANGLE_FAN);
     glVertex3d(0,height,0);
-
     for(int i=0; i<=slices; i++){
         x = (float) (radius * sin(1.0*i*arc));
-        y = height;
         z = (float) (radius * cos(1.0*i*arc));
-        int c = (i * slices)%90;
+        c = (i * slices)%90;
         glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
-        glVertex3f(x,y,z);
-
-
+        glVertex3f(x,height,z);
     }
     glEnd();
 
+    /*//SIDE
     glBegin(GL_TRIANGLE_STRIP);
     for (int i = 0; i<=slices; i++){
         x = (float) (radius * sin(1.0*i*arc));
@@ -77,18 +74,47 @@ void drawCylinder( float radius, float height, int slices) {
         z = (float) (radius * cos(1.0*i*arc + arc/2));
         glVertex3f(x,0,z);
     }
+    glEnd();*/
+
+
+
+
+    //SIDE
+    glBegin(GL_TRIANGLES);
+
+    for (int i = 0; i<=slices; i++){
+        c = (i * slices)%90;
+        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+
+        x = (float) (radius * sin(1.0*i*arc));
+        z = (float) (radius * cos(1.0*i*arc));
+        next_x = (float) (radius * sin(1.0*(i+1)*arc));
+        next_z = (float) (radius * cos(1.0*(i+1)*arc));
+
+        glVertex3f(x,height,z);
+        glVertex3f(x,0,z);
+        glVertex3f(next_x,height,next_z);
+
+        c = ((i-slices) * slices)%90;
+        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+
+        glVertex3f(x,0,z);
+        glVertex3f(next_x,0,next_z);
+        glVertex3f(next_x,height,next_z);
+    }
     glEnd();
+
+
 
     //BASE
     glBegin(GL_TRIANGLE_FAN);
     glVertex3d(0,0,0);
     for(int i=slices; i>=0; i--){
         x = (float) (radius * sin(1.0*i*arc));
-        y = 0;
         z = (float) (radius * cos(1.0*i*arc));
-        int c = ((i-slices) * slices)%90;
+        c = ((i-slices) * slices)%90;
         glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
-        glVertex3f(x,y,z);
+        glVertex3f(x,0,z);
     }
     glEnd();
 
@@ -108,12 +134,12 @@ void renderScene(void) {
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
     glTranslatef(ox,oy,oz);
-    glRotatef(angle,0,1,0);
+    glRotatef(angle,rx,ry,rz);
     if(rota==1){
-        glRotatef(float(glutGet(GLUT_ELAPSED_TIME) / 20 % 360), 0.0, 1.0, 0.0);
+        glRotatef(float(glutGet(GLUT_ELAPSED_TIME) / 20 % 360), rx, ry, rz);
     }
     else if(rota==-1){
-        glRotatef(float(- glutGet(GLUT_ELAPSED_TIME) / 20 % 360), 0.0, 1.0, 0.0);
+        glRotatef(float(- glutGet(GLUT_ELAPSED_TIME) / 20 % 360), rx, ry, rz);
     }
 
     if(blink ==1){
@@ -183,14 +209,30 @@ void processKeys(unsigned char c, int xx, int yy) {
             blink += 1;
             blink %= 2;
             break;
+        case 'x':
+            rx++;
+            rx %=2;
+            break;
+        case 'y':
+            ry++;
+            ry %= 2;
+            break;
+        case 'z':
+            rz++;
+            rz %=2;
+            break;
         case 'r':
             angle = 0;
             ox = 0;
             oy = 0;
             oz = 0;
             rota = 0;
+            rx = 0;
+            ry = 1;
+            rz = 0;
             blink = 0;
             mode = GL_LINE;
+            break;
         default:
             break;
 
