@@ -6,12 +6,13 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include<iostream>
 #define DISPLACEMENT 0.1
 #define ROTATION 15
 
 
 float ox = 0, oy = 0, oz = 0 , angle = 0;
-int mode = GL_LINE, rota = 0, blink = 0;
+int mode = GL_LINE, rota = 0, blink = 0, speed = 5, max_speed = 15;
 
 
 void changeSize(int w, int h) {
@@ -57,7 +58,8 @@ void drawCylinder( float radius, float height, int slices) {
         x = (float) (radius * sin(1.0*i*arc));
         y = height;
         z = (float) (radius * cos(1.0*i*arc));
-        glColor3f(float(sin(i)),float(cos(i)),float(tan(i)));
+        int c = (i * slices)%90;
+        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
         glVertex3f(x,y,z);
 
 
@@ -68,10 +70,11 @@ void drawCylinder( float radius, float height, int slices) {
     for (int i = 0; i<=slices; i++){
         x = (float) (radius * sin(1.0*i*arc));
         z = (float) (radius * cos(1.0*i*arc));
+        int c = (i * slices)%90;
+        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
         glVertex3f(x,height,z);
         x = (float) (radius * sin(1.0*i*arc +arc/2));
         z = (float) (radius * cos(1.0*i*arc + arc/2));
-        glColor3f(float(sin(i)),float(cos(i)),float(tan(i)));
         glVertex3f(x,0,z);
     }
     glEnd();
@@ -83,7 +86,8 @@ void drawCylinder( float radius, float height, int slices) {
         x = (float) (radius * sin(1.0*i*arc));
         y = 0;
         z = (float) (radius * cos(1.0*i*arc));
-        glColor3f(float(sin(i-slices)),float(cos(i-slices)),float(tan(i-slices)));
+        int c = ((i-slices) * slices)%90;
+        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
         glVertex3f(x,y,z);
     }
     glEnd();
@@ -113,13 +117,14 @@ void renderScene(void) {
     }
 
     if(blink ==1){
-        int m = int(glutGet(GLUT_ELAPSED_TIME))%15;
-        if(m <5)
+        if(speed <max_speed/3)
             mode = GL_LINE;
-        else if(m>=5 && m<10 )
+        else if(speed>=max_speed/3 && speed<(max_speed/3)*2 )
             mode = GL_POINT;
         else
             mode = GL_FILL;
+        speed++;
+        speed %= max_speed;
     }
 
 
@@ -175,7 +180,8 @@ void processKeys(unsigned char c, int xx, int yy) {
             rota = 0;
             break;
         case 'b':
-            blink= 1;
+            blink += 1;
+            blink %= 2;
             break;
         case 'r':
             angle = 0;
