@@ -185,10 +185,11 @@ void renderScene(void) {
         speed++;
         speed %= max_speed;
     }
-
     drawAxis();
+
     glPolygonMode(GL_FRONT, mode);
 	drawCylinder(1,2,10);
+
 
 	// End of frame
 	glutSwapBuffers();
