@@ -11,8 +11,16 @@
 #define ROTATION 15
 
 
-float ox = 0, oy = 0, oz = 0 , angle = 0;
-int mode = GL_LINE, rota = 0,  rx = 0, ry =1, rz =0, blink = 0, speed = 5, max_speed = 15;
+float ox = 0, oy = 0, oz = 0 , angle = 0, alpha = 0, beta = 0, eyeX = 5.0, eyeY = 5.0, eyeZ = 5.0, radius;
+
+
+int mode = GL_LINE, rota = 0,  rx = 0, ry =1, rz =0, blink = 0, speed = 5, max_speed = 15, width = 800, height = 800;
+
+void setCamera(){
+    eyeX = radius*sin(alpha)*cos(beta);
+    eyeY = radius*sin(beta);
+    eyeZ = radius*cos(alpha)*cos(beta);
+}
 
 
 void changeSize(int w, int h) {
@@ -24,7 +32,8 @@ void changeSize(int w, int h) {
 
 	// compute window's aspect ratio 
 	float ratio = w * 1.0 / h;
-
+    width = w;
+    height = h;
 	// Set the projection matrix as current
 	glMatrixMode(GL_PROJECTION);
 	// Load Identity Matrix
@@ -40,6 +49,23 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void drawAxis(){
+    glBegin(GL_LINES);
+    glColor3f(1,0,0);
+    glVertex3f(radius,0,0);
+    glVertex3f(-radius,0,0);
+
+    glColor3f(0,1,0);
+    glVertex3f(0, radius,0);
+    glVertex3f(0,-radius,0);
+
+    glColor3f(0,0,1);
+    glVertex3f(0,0,radius);
+    glVertex3f(0,0,-radius);
+    glEnd();
+    glColor3f(1,1,1);
+}
+
 
 void drawCylinder( float radius, float height, int slices) {
 
@@ -51,32 +77,26 @@ void drawCylinder( float radius, float height, int slices) {
     int c;
 
     //TOP
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0,height,0);
+    glBegin(GL_TRIANGLES);
     for(int i=0; i<=slices; i++){
+        c = (i * slices)%90;
+        //glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+
+
+
         x = (float) (radius * sin(1.0*i*arc));
         z = (float) (radius * cos(1.0*i*arc));
-        c = (i * slices)%90;
-        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+        next_x = (float) (radius * sin(1.0*(i+1)*arc));
+        next_z = (float) (radius * cos(1.0*(i+1)*arc));
+        glVertex3d(0,height,0);
         glVertex3f(x,height,z);
+        glVertex3f(next_x,height,next_z);
+
+
+
+
     }
     glEnd();
-
-    /*//SIDE
-    glBegin(GL_TRIANGLE_STRIP);
-    for (int i = 0; i<=slices; i++){
-        x = (float) (radius * sin(1.0*i*arc));
-        z = (float) (radius * cos(1.0*i*arc));
-        int c = (i * slices)%90;
-        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
-        glVertex3f(x,height,z);
-        x = (float) (radius * sin(1.0*i*arc +arc/2));
-        z = (float) (radius * cos(1.0*i*arc + arc/2));
-        glVertex3f(x,0,z);
-    }
-    glEnd();*/
-
-
 
 
     //SIDE
@@ -84,7 +104,7 @@ void drawCylinder( float radius, float height, int slices) {
 
     for (int i = 0; i<=slices; i++){
         c = (i * slices)%90;
-        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+        //glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
 
         x = (float) (radius * sin(1.0*i*arc));
         z = (float) (radius * cos(1.0*i*arc));
@@ -96,7 +116,7 @@ void drawCylinder( float radius, float height, int slices) {
         glVertex3f(next_x,height,next_z);
 
         c = ((i-slices) * slices)%90;
-        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+        //glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
 
         glVertex3f(x,0,z);
         glVertex3f(next_x,0,next_z);
@@ -107,18 +127,30 @@ void drawCylinder( float radius, float height, int slices) {
 
 
     //BASE
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0,0,0);
+    glBegin(GL_TRIANGLES);
     for(int i=slices; i>=0; i--){
+        c = ((i-slices) * slices)%90;
+        //glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+
+
         x = (float) (radius * sin(1.0*i*arc));
         z = (float) (radius * cos(1.0*i*arc));
-        c = ((i-slices) * slices)%90;
-        glColor3f(float(sin(c)),float(cos(c)),float(tan(c)));
+        next_x = (float) (radius * sin(1.0*(i+1)*arc));
+        next_z = (float) (radius * cos(1.0*(i+1)*arc));
+
+        glVertex3d(0,0,0);
+        glVertex3f(next_x,0,next_z);
         glVertex3f(x,0,z);
     }
     glEnd();
 
 }
+
+
+
+
+
+
 
 
 
@@ -130,7 +162,7 @@ void renderScene(void) {
 
 	// set the camera
 	glLoadIdentity();
-	gluLookAt(5.0,5.0,5.0, 
+	gluLookAt(eyeX,eyeY,eyeZ,
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
     glTranslatef(ox,oy,oz);
@@ -153,7 +185,7 @@ void renderScene(void) {
         speed %= max_speed;
     }
 
-
+    drawAxis();
     glPolygonMode(GL_FRONT, mode);
 	drawCylinder(1,2,10);
 
@@ -187,8 +219,14 @@ void processKeys(unsigned char c, int xx, int yy) {
         case 'e':
             angle += ROTATION;
             break;
+        case 'E':
+            rota = 1;
+            break;
         case 'q':
             angle -= ROTATION;
+            break;
+        case 'Q':
+            rota = -1;
             break;
         case 'f':
             mode = GL_FILL;
@@ -248,20 +286,72 @@ void processSpecialKeys(int key, int xx, int yy) {
 // put code to process special keys in here
     switch (key) {
         case GLUT_KEY_RIGHT:
-            rota = 1;
+            alpha -= 0.1;
             break;
         case GLUT_KEY_LEFT:
-            rota = -1;
+            alpha +=0.1;
             break;
+        case GLUT_KEY_UP:
+            beta +=0.1;
+            if(beta > M_PI_2)
+                beta = M_PI_2;
+            break;
+        case GLUT_KEY_DOWN:
+            beta -=0.1;
+            if(beta < -M_PI_2)
+                beta = -M_PI_2;
+            break;
+        case GLUT_KEY_PAGE_UP:
+            radius += 0.1;
+            break;
+        case GLUT_KEY_PAGE_DOWN:
+            radius -= 0.1;
+            if(radius < 0.1)
+                radius = 0.1;
+            break;
+
         default:
             break;
 
     }
+    setCamera();
+
+}
+
+void passiveMouseFunc(int x, int y){
+    if(x> width/2 && y > height/2){
+        alpha -= 0.1;
+        beta -= 0.1;
+        if(beta < -M_PI_2)
+            beta = -M_PI_2;
+    }
+
+    else if(x>width/2 && y<height/2){
+        alpha -= 0.1;
+        beta += 0.1;
+    }
+
+    else if(x<width/2 && y<height/2){
+        alpha += 0.1;
+        beta += 0.1;
+    }
+    else if(x<width/2 && y>height/2){
+        alpha += 0.1;
+        beta -= 0.1;
+        if(beta < -M_PI_2)
+            beta = -M_PI_2;
+    }
+    setCamera();
 
 }
 
 
 int main(int argc, char **argv) {
+
+
+    radius = sqrt(eyeX*eyeX + eyeY*eyeY + eyeZ*eyeZ);
+    beta = asin(eyeY/radius);
+    alpha = asin(eyeX/(radius*cos(beta)));
 
 // init GLUT and the window
 	glutInit(&argc, argv);
@@ -274,6 +364,7 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(renderScene);
     glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
+    glutPassiveMotionFunc(passiveMouseFunc);
 	
 // Callback registration for keyboard processing
 	glutKeyboardFunc(processKeys);
