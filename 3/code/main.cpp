@@ -14,7 +14,8 @@
 float ox = 0, oy = 0, oz = 0 , angle = 0, alpha = 0, beta = 0, eyeX = 5.0, eyeY = 5.0, eyeZ = 5.0, radius;
 
 
-int mode = GL_LINE, rota = 0,  rx = 0, ry =1, rz =0, blink = 0, speed = 5, max_speed = 15, width = 800, height = 800;
+int mode = GL_LINE, rota = 0,  rx = 0, ry =1, rz =0, blink = 0, speed = 5, max_speed = 15,
+width = 800, height = 800, mouseX = 0, mouseY = 0;
 
 void setCamera(){
     eyeX = radius*sin(alpha)*cos(beta);
@@ -319,28 +320,38 @@ void processSpecialKeys(int key, int xx, int yy) {
 }
 
 void passiveMouseFunc(int x, int y){
-    if(x> width/2 && y > height/2){
-        alpha -= 0.1;
-        beta -= 0.1;
-        if(beta < -M_PI_2)
-            beta = -M_PI_2;
+    if(mouseX ==0 && mouseY==0){
+        mouseX = x;
+        mouseY = y;
+    }
+    if(x>mouseX){
+        alpha -= 0.05;
+        mouseX = x;
+
     }
 
-    else if(x>width/2 && y<height/2){
-        alpha -= 0.1;
-        beta += 0.1;
+    else if(x<mouseX){
+        alpha += 0.05;
+        mouseX = x;
     }
 
-    else if(x<width/2 && y<height/2){
-        alpha += 0.1;
-        beta += 0.1;
-    }
-    else if(x<width/2 && y>height/2){
-        alpha += 0.1;
-        beta -= 0.1;
+    if(y>mouseY){
+        beta -= 0.05;
         if(beta < -M_PI_2)
             beta = -M_PI_2;
+        mouseY = y;
+
     }
+
+    else if(y<mouseY){
+        beta += 0.05;
+        if(beta > M_PI_2)
+            beta = M_PI_2;
+        mouseY = y;
+    }
+
+    mouseY = y;
+    mouseX = x;
     setCamera();
 
 }
