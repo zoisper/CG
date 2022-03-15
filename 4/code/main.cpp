@@ -10,9 +10,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
+#include<iostream>
 
-GLuint vertices, verticeCount;
+GLuint buffers[1], indexes[1], verticeCount;
 std::vector<double> vertexB;
+std::vector<int> indices;
 
 float alfa = 0.0f, beta = 0.0f, radius = 5.0f;
 float camX, camY, camZ;
@@ -165,6 +167,13 @@ void vboCylinder(float radius, float height, int sides) {
         vertexB.push_back(height*0.5);
         vertexB.push_back(-sin((i + 1) * step *M_PI / 180.0)*radius);
 
+        /* Para fazer com indices mas nao esta a funcionar
+        indices.push_back(0);
+        indices.push_back(i+1);
+        indices.push_back(i+2);
+         */
+
+
 
     }
 
@@ -211,10 +220,18 @@ void vboCylinder(float radius, float height, int sides) {
         vertexB.push_back(height*0.5);
         vertexB.push_back(-sin((i + 1) * step *M_PI / 180.0)*radius);
 
-        verticeCount = vertexB.size()/3;
-        glBindBuffer(GL_ARRAY_BUFFER, vertices);
-        glBufferData(GL_ARRAY_BUFFER, vertexB.size() * sizeof(double), vertexB.data(), GL_STATIC_DRAW);
+
     }
+    verticeCount = vertexB.size()/3;
+
+
+
+    glBindBuffer(GL_ARRAY_BUFFER,buffers[0]);
+    glBufferData(GL_ARRAY_BUFFER, vertexB.size() * sizeof(double), vertexB.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexes[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(int), indices.data(), GL_STATIC_DRAW);
+
 }
 
 
@@ -233,9 +250,15 @@ void renderScene(void) {
     //cylinder(1,2,10);
     glPolygonMode(GL_FRONT, mode);
     glColor3f(0.0,1.0,1.0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertices);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
     glVertexPointer(3, GL_DOUBLE, 0, 0);
     glDrawArrays(GL_TRIANGLES, 0, verticeCount);
+
+    // para desenhar com indices mas nao esta a funcionar
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexes[0]);
+    //glDrawElements(GL_TRIANGLES, verticeCount, GL_UNSIGNED_INT, NULL);
 
 
     // End of frame
@@ -326,7 +349,8 @@ int main(int argc, char **argv) {
 
     glewInit();
     glEnableClientState(GL_VERTEX_ARRAY);
-    glGenBuffers(1, &vertices);
+    glGenBuffers(1,buffers);
+    glGenBuffers(1, indexes);
     vboCylinder(1,2,10);
 
 
