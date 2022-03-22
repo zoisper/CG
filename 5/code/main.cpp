@@ -11,10 +11,22 @@
 
 # include<stdlib.h>
 #include<time.h>
+#include <vector>
 
+struct Tuple{
+    int angle;
+    int radius;
+    Tuple(int angle, int raidus){
+        this->angle = angle;
+        this->radius = raidus;
+    }
+
+};
 
 float alfa = 0.0f, beta = 0.5f, radius = 100.0f;
 float camX, camY, camZ;
+int reforest = 1;
+std::vector<Tuple> treesPositions;
 
 
 void spherical2Cartesian() {
@@ -69,14 +81,25 @@ void drawTree(float trunk_base, float trunk_height, float top_base, float top_he
 
 void drawTrees(int N){
 
+    if(reforest){
+        treesPositions.clear();
+        for(int i=0; i<N;i++){
+            int angle= rand();
+            int radius = 50 + rand()%50;
+
+            treesPositions.push_back(Tuple(angle, radius));
+        }
+
+        reforest = 0;
+    }
     for(int i=0;i<N; i++){
         glPushMatrix();
-        int arch = rand();
-        int radius = 50 + rand()%50;
-        glRotatef(arch,0,1,0);
-
+        int angle = treesPositions[i].angle;
+        int radius = treesPositions[i].radius;
+        glRotatef(angle,0,1,0);
         glTranslatef(radius,0,0);
-        drawTree(0.5,2,1,3,20,20);
+        //drawTree(0.5,2,1,3,20,20);
+        drawTree(1,6,3,9,20,20);
         glPopMatrix();
     }
 
@@ -93,11 +116,12 @@ void drawTorus(){
 
 void drawBlueTeaPots(int N){
     float arch = 360/N;
-    glColor3f(0,0,1);
+    glColor3f(0.07, 0.11, 0.84);
     for(int i=0; i<N; i++){
         glPushMatrix();
         glRotatef(arch*i,0,1,0);
         glTranslatef(15,1.25,0);
+        glRotatef(-glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
         glutSolidTeapot(2);
         glPopMatrix();
     }
@@ -108,12 +132,13 @@ void drawBlueTeaPots(int N){
 
 void drawRedTeaPots(int N){
     float arch = 360/N;
-    glColor3f(1,0,0);
+    glColor3f(0.84, 0.07, 0.07);
     for(int i=0; i<N; i++){
         glPushMatrix();
         glRotatef(arch*i,0,1,0);
         glTranslatef(35,1.25,0);
         glRotatef(90,0,1,0);
+        glRotatef(glutGet(GLUT_ELAPSED_TIME) / 20 % 360, 0.0, 1.0, 0.0);
         glutSolidTeapot(2);
         glPopMatrix();
     }
@@ -146,9 +171,12 @@ void renderScene(void) {
 	glEnd();
 
     glColor3f(1,1,1);
-    drawTrees(800);
+    drawTrees(400);
     drawTorus();
+    int rotation = glutGet(GLUT_ELAPSED_TIME) / 20 % 360;
+    glRotatef(-rotation, 0.0, 1.0, 0.0);
     drawBlueTeaPots(8);
+    glRotatef(2*rotation, 0.0, 1.0, 0.0);
     drawRedTeaPots(18);
 
 
@@ -160,6 +188,15 @@ void renderScene(void) {
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
+    switch (c) {
+
+        case ' ':
+            reforest = 1;
+            break;
+        default:
+            break;
+    }
+    glutPostRedisplay();
 
 }
 
@@ -192,6 +229,8 @@ void processSpecialKeys(int key, int xx, int yy) {
 		break;
 
 	case GLUT_KEY_PAGE_UP: radius += 1.0f; break;
+        default:
+            break;
 	}
 	spherical2Cartesian();
 	glutPostRedisplay();
@@ -221,6 +260,7 @@ int main(int argc, char **argv) {
 		
 // Required callback registry 
 	glutDisplayFunc(renderScene);
+    glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
 	
 // Callback registration for keyboard processing
