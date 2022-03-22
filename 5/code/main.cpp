@@ -9,6 +9,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+# include<stdlib.h>
+#include<time.h>
+
+
 float alfa = 0.0f, beta = 0.5f, radius = 100.0f;
 float camX, camY, camZ;
 
@@ -46,6 +50,77 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void drawTree(float trunk_base, float trunk_height, float top_base, float top_height, int slices, int stacks){
+    glPushMatrix();
+    glRotatef(-90,1,0,0);
+    glColor3f(0.57, 0.42, 0.07);
+    glutSolidCone(trunk_base,trunk_height,slices,stacks);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0,trunk_height*0.7,0);
+    glRotatef(-90,1,0,0);
+    glColor3f(0.1, 0.28, 0.11);
+    glutSolidCone(top_base,top_height,slices,stacks);
+    glPopMatrix();
+    glColor3f(1,1,1);
+
+
+}
+
+void drawTrees(int N){
+
+    for(int i=0;i<N; i++){
+        glPushMatrix();
+        int arch = rand();
+        int radius = 50 + rand()%50;
+        glRotatef(arch,0,1,0);
+
+        glTranslatef(radius,0,0);
+        drawTree(0.5,2,1,3,20,20);
+        glPopMatrix();
+    }
+
+}
+
+void drawTorus(){
+    glPushMatrix();
+    glTranslatef(0,0.5,0);
+    glColor3f(0.73, 0.04, 0.61);
+    glutSolidTorus(2,5,50,50);
+    glPopMatrix();
+    glColor3f(1,1,1);
+}
+
+void drawBlueTeaPots(int N){
+    float arch = 360/N;
+    glColor3f(0,0,1);
+    for(int i=0; i<N; i++){
+        glPushMatrix();
+        glRotatef(arch*i,0,1,0);
+        glTranslatef(15,1.25,0);
+        glutSolidTeapot(2);
+        glPopMatrix();
+    }
+
+    glColor3f(1,1,1);
+
+}
+
+void drawRedTeaPots(int N){
+    float arch = 360/N;
+    glColor3f(1,0,0);
+    for(int i=0; i<N; i++){
+        glPushMatrix();
+        glRotatef(arch*i,0,1,0);
+        glTranslatef(35,1.25,0);
+        glRotatef(90,0,1,0);
+        glutSolidTeapot(2);
+        glPopMatrix();
+    }
+
+    glColor3f(1,1,1);
+
+}
 
 
 void renderScene(void) {
@@ -69,6 +144,14 @@ void renderScene(void) {
 		glVertex3f(-100.0f, 0, 100.0f);
 		glVertex3f(100.0f, 0, 100.0f);
 	glEnd();
+
+    glColor3f(1,1,1);
+    drawTrees(800);
+    drawTorus();
+    drawBlueTeaPots(8);
+    drawRedTeaPots(18);
+
+
 	// End of frame
 	glutSwapBuffers();
 }
@@ -128,7 +211,7 @@ void printInfo() {
 
 
 int main(int argc, char **argv) {
-
+    srand(1);
 // init GLUT and the window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
