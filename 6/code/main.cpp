@@ -2,6 +2,7 @@
 
 #include<stdio.h>
 #include<stdlib.h>
+#include<iostream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -16,28 +17,22 @@
 #include <GL/glut.h>
 #endif
 
-#define ANG2RAD M_PI/180.0 
-
-#define COWBOYS 8
-#define RAIO_COWBOYS 5
-#define INDIOS 16
-#define RAIO_INDIOS 25
-#define ARVORES 1000
-#define STEP_COWBOY 1.0f
-#define STEP_INDIO 0.5f
-
-
-float step = 0.0;
-
-float height = 2.0f;
-float x = 0.0f;
-float z = 0.0f;
-
 
 float camX = 00, camY = 30, camZ = 40;
 int startX, startY, tracking = 0;
 
 int alpha = 0, beta = 45, r = 50;
+
+unsigned int t;
+int tw, th;
+unsigned char * imageData;
+
+GLuint* vertices;
+double vertexCount;
+GLuint buffers[1];
+
+std::vector<float> vertexB;
+
 
 void changeSize(int w, int h) {
 
@@ -46,13 +41,13 @@ void changeSize(int w, int h) {
 	if(h == 0)
 		h = 1;
 
-	// compute window's aspect ratio 
+	// compute window's aspect ratio
 	float ratio = w * 1.0 / h;
 
 	// Reset the coordinate system before modifying
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	// Set the viewport to be the entire window
     glViewport(0, 0, w, h);
 
@@ -64,116 +59,20 @@ void changeSize(int w, int h) {
 }
 
 
-void drawPlane() {
 
-	glColor3f(0.2f,0.8f,0.2f);
-	glBegin(GL_QUADS);
-		glNormal3f(0.0, 1.0, 0.0);
-		glVertex3f(-100.0, 0.0, 100.0);
-		glVertex3f( 100.0, 0.0, 100.0);
-		glVertex3f( 100.0, 0.0,-100.0);
-		glVertex3f(-100.0, 0.0,-100.0);
-	glEnd();
-}
+void drawTerrain() {
 
-void drawTree() {
+    // colocar aqui o c√≥digo de desnho do terreno usando VBOs com TRIANGLE_STRIPS
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+    for (int i = 0; i < th - 1 ; i++) {
+        glDrawArrays(GL_TRIANGLE_STRIP, (tw) * 2 * i, (tw) * 2);
+    }
 
-	glPushMatrix();
-	glRotatef(-90, 1.0f, 0.0f, 0.0f);
-	glColor3f(1.0, 1.0, 0.5);
-	glutSolidCone(0.25f, 4, 5, 1);
-
-	glColor3f(0.0f, 0.5f + rand() * 0.5f/RAND_MAX,0.0f);
-	glTranslatef(0.0f, 0.0f, 2.0f);
-	glutSolidCone(2.0f, 5.0f, 5.0f, 1.0f);
-	glPopMatrix();
+    
 }
 
 
-void placeTrees() {
-
-	float r = 35.0;
-	float alpha;
-	float rr;
-	float x,z;
-
-	srand(31457);
-	int arvores = 0;
-
-	while (arvores < ARVORES) {
-
-		rr = rand() * 150.0/ RAND_MAX;
-		alpha = rand() * 6.28 / RAND_MAX;
-
-		x = cos(alpha) * (rr + r);
-		z = sin(alpha) * (rr + r);
-
-		if (fabs(x) < 100 && fabs(z) < 100) {
-
-			glPushMatrix();
-			glTranslatef(x,0.0,z);
-			drawTree();
-			glPopMatrix();
-			arvores++;
-		}
-	}
-}
-
-
-void drawDonut() {
-
-	glPushMatrix();
-	glTranslatef(0.0,0.5,0.0);
-	glColor3f(1.0f,0.0f,1.0f);
-	glutSolidTorus(0.5,1.25,8,16);
-	glPopMatrix();
-}
-
-
-void drawIndios() {
-
-	float angulo;
-	glColor3f(1.0f,0.0f,0.0f);
-	for (int i = 0; i < INDIOS; i++) {
-		
-		angulo = i * 360.0/INDIOS + step * STEP_INDIO;
-		glPushMatrix();
-		glRotatef(angulo,0.0,1.0,0.0);
-		glTranslatef(0.0,0.0,RAIO_INDIOS);
-		glutSolidTeapot(1);
-		glPopMatrix();
-	}
-}
-
-
-void drawCowboys() {
-
-	float angulo;
-	glColor3f(0.0f,0.0f,1.0f);
-	for (int i = 0; i < COWBOYS; i++) {
-		
-		angulo = i * 360.0/COWBOYS + step * STEP_COWBOY;
-		glPushMatrix();
-		glRotatef(-angulo,0.0,1.0,0.0);
-		glTranslatef(RAIO_COWBOYS,0.0,0.0);
-		glutSolidTeapot(1);
-		glPopMatrix();
-	}
-}
-
-
-void drawScene() {
-
-	drawPlane();
-	placeTrees();
-	drawDonut();
-	glPushMatrix();
-	// move teapots up so that they are placed on top of the ground plane
-	glTranslatef(0.0,1.0,0.0);
-	drawCowboys();
-	drawIndios();
-	glPopMatrix();
-}
 
 
 void renderScene(void) {
@@ -184,12 +83,17 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	gluLookAt(camX, camY, camZ, 
+	gluLookAt(camX, camY, camZ,
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
+    glPolygonMode(GL_FRONT, GL_LINE);
 
-	drawScene();
-	step++;
+	drawTerrain();
+
+
+	// just so that it renders something before the terrain is built
+	// to erase when the terrain is ready
+	//glutWireTeapot(2.0);
 
 // End of frame
 	glutSwapBuffers();
@@ -197,120 +101,167 @@ void renderScene(void) {
 
 
 
-// escrever funÁ„o de processamento do teclado
-
 void processKeys(unsigned char key, int xx, int yy) {
 
+// put code to process regular keys in here
 }
 
 
 
 void processMouseButtons(int button, int state, int xx, int yy) {
-	
-	if (state == GLUT_DOWN)  {
-		startX = xx;
-		startY = yy;
-		if (button == GLUT_LEFT_BUTTON)
-			tracking = 1;
-		else if (button == GLUT_RIGHT_BUTTON)
-			tracking = 2;
-		else
-			tracking = 0;
-	}
-	else if (state == GLUT_UP) {
-		if (tracking == 1) {
-			alpha += (xx - startX);
-			beta += (yy - startY);
-		}
-		else if (tracking == 2) {
-			
-			r -= yy - startY;
-			if (r < 3)
-				r = 3.0;
-		}
-		tracking = 0;
-	}
+
+    if (state == GLUT_DOWN)  {
+        startX = xx;
+        startY = yy;
+        if (button == GLUT_LEFT_BUTTON)
+            tracking = 1;
+        else if (button == GLUT_RIGHT_BUTTON)
+            tracking = 2;
+        else
+            tracking = 0;
+    }
+    else if (state == GLUT_UP) {
+        if (tracking == 1) {
+            alpha += (xx - startX);
+            beta += (yy - startY);
+        }
+        else if (tracking == 2) {
+
+            r -= yy - startY;
+            if (r < 3)
+                r = 3.0;
+        }
+        tracking = 0;
+    }
 }
 
 
 void processMouseMotion(int xx, int yy) {
 
-	int deltaX, deltaY;
-	int alphaAux, betaAux;
-	int rAux;
+    int deltaX, deltaY;
+    int alphaAux, betaAux;
+    int rAux;
 
-	if (!tracking)
-		return;
+    if (!tracking)
+        return;
 
-	deltaX = xx - startX;
-	deltaY = yy - startY;
+    deltaX = xx - startX;
+    deltaY = yy - startY;
 
-	if (tracking == 1) {
+    if (tracking == 1) {
 
 
-		alphaAux = alpha + deltaX;
-		betaAux = beta + deltaY;
+        alphaAux = alpha + deltaX;
+        betaAux = beta + deltaY;
 
-		if (betaAux > 85.0)
-			betaAux = 85.0;
-		else if (betaAux < -85.0)
-			betaAux = -85.0;
+        if (betaAux > 85.0)
+            betaAux = 85.0;
+        else if (betaAux < -85.0)
+            betaAux = -85.0;
 
-		rAux = r;
-	}
-	else if (tracking == 2) {
+        rAux = r;
+    }
+    else if (tracking == 2) {
 
-		alphaAux = alpha;
-		betaAux = beta;
-		rAux = r - deltaY;
-		if (rAux < 3)
-			rAux = 3;
-	}
-	camX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-	camZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-	camY = rAux * 							     sin(betaAux * 3.14 / 180.0);
+        alphaAux = alpha;
+        betaAux = beta;
+        rAux = r - deltaY;
+        if (rAux < 3)
+            rAux = 3;
+    }
+    camX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    camZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    camY = rAux * 							     sin(betaAux * 3.14 / 180.0);
 }
 
+
+double h(int i, int j) {
+    double pixel = imageData[i * tw + j];
+    return pixel / 255 * 30;
+}
 
 void init() {
 
-// Colocar aqui load da imagem que representa o mapa de alturas
+// 	Load the height map "terreno.jpg"
+    ilGenImages(1, &t);
+    ilBindImage(t);
+
+    ilLoadImage((ILstring)"terreno.jpg");
+    ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
+
+    tw = ilGetInteger(IL_IMAGE_WIDTH);
+    th = ilGetInteger(IL_IMAGE_HEIGHT);
+    imageData = ilGetData();
+
+// 	Build the vertex arrays
+    vertices = (GLuint *)calloc(th-1, sizeof(GLuint));
+    glGenBuffers(1, buffers);
+
+    int halfH = th / 2;
+    int halfW = tw / 2;
+
+    vertexCount = 2 * tw;
+
+    for(int i = 0; i < th - 1; i++) {
+        std::vector<double> strip;
+        for(int j = 0; j < tw; j++) {
+            vertexB.push_back(i + 1 - halfH);
+            vertexB.push_back(h(i+1,j));
+            vertexB.push_back(j - halfW);
+
+            vertexB.push_back(i - halfH);
+            vertexB.push_back(h(i,j));
+            vertexB.push_back(j -halfW);
+
+        }
+
+    }
+    glGenBuffers(1, buffers);
+    glBindBuffer(GL_ARRAY_BUFFER,buffers[0]);
+    glBufferData(GL_ARRAY_BUFFER,vertexB.size()*sizeof(float ) , vertexB.data(), GL_STATIC_DRAW);
 
 
-
-
-// alguns settings para OpenGL
-	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+// 	OpenGL settings
+    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
 }
+
+
+
+
 
 
 int main(int argc, char **argv) {
 
-// inicializaÁ„o
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
-	glutInitWindowPosition(100,100);
-	glutInitWindowSize(320,320);
-	glutCreateWindow("CG@DI-UM");
-		
+// init GLUT and the window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
+    glutInitWindowPosition(100,100);
+    glutInitWindowSize(320,320);
+    glutCreateWindow("CG@DI-UM");
 
-// registo de funÁıes 
-	glutDisplayFunc(renderScene);
-	glutIdleFunc(renderScene);
-	glutReshapeFunc(changeSize);
 
-// pÙr aqui registo da funÁıes do teclado e rato
+// Required callback registry
+    glutDisplayFunc(renderScene);
+    glutIdleFunc(renderScene);
+    glutReshapeFunc(changeSize);
 
-	glutKeyboardFunc(processKeys);
-	glutMouseFunc(processMouseButtons);
-	glutMotionFunc(processMouseMotion);
+// Callback registration for keyboard processing
+    glutKeyboardFunc(processKeys);
+    glutMouseFunc(processMouseButtons);
+    glutMotionFunc(processMouseMotion);
 
-	init();	
+    glewInit();
+    glEnableClientState(GL_VERTEX_ARRAY);
 
-// entrar no ciclo do GLUT 
-	glutMainLoop();
-	
-	return 0;
+    ilInit();
+
+    init();
+
+// enter GLUT's main cycle
+    glutMainLoop();
+
+    return 0;
 }
+
 
