@@ -86,7 +86,7 @@ void renderScene(void) {
 	gluLookAt(camX, camY, camZ,
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
-    glPolygonMode(GL_FRONT, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	drawTerrain();
 

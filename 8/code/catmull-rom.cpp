@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -10,13 +12,16 @@
 
 
 float camX = 0, camY, camZ = 5;
+float prev_y[3] = {0,1,0};
 int startX, startY, tracking = 0;
 
 int alpha = 0, beta = 0, r = 5;
 
 #define POINT_COUNT 5
 // Points that make up the loop for catmull-rom interpolation
-float p[POINT_COUNT][3] = {{-1,-1,0},{-1,1,0},{1,1,0},{0,0,0},{1,-1,0}};
+//float p[POINT_COUNT][3] = {{-1,-1,0},{-1,1,0},{1,1,0},{0,0,0},{1,-1,0}};
+float p[POINT_COUNT][3] = {{-1,-1,0},{-1,1,-3},{1,1,0},{1,-1,0},{0,0,3}};
+
 
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
 
@@ -51,12 +56,12 @@ float length(float *v) {
 
 }
 
-void multMatrixVector(float *m, float *v, float *res) {
+void multMatrixVector(float m[4][4], float *v, float *res) {
 
 	for (int j = 0; j < 4; ++j) {
 		res[j] = 0;
 		for (int k = 0; k < 4; ++k) {
-			res[j] += v[k] * m[j * 4 + k];
+			res[j] += v[k] * m[j][k];
 		}
 	}
 
@@ -70,14 +75,23 @@ void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, flo
 						{ 1.0f, -2.5f,  2.0f, -0.5f},
 						{-0.5f,  0.0f,  0.5f,  0.0f},
 						{ 0.0f,  1.0f,  0.0f,  0.0f}};
-			
-	// Compute A = M * P
-	
-	// Compute pos = T * A
-	
-	// compute deriv = T' * A
 
-	// ...
+
+    for(int i=0; i< 3; i++ ) {
+        float p[4] = {p0[i], p1[i], p2[i], p3[i]};
+        float a[4];
+
+
+        // Compute A = M * P
+        multMatrixVector(m, p, a);
+        // Compute pos = T * A
+        pos[i] = powf(t,3.0)*a[0] + powf(t,2.0)*a[1] + t*a[2] + a[3];
+
+        // compute deriv = T' * A
+        deriv[i] = 3*powf(t,2.0)*a[0] + 2*t*a[1] + a[2];
+
+        // ...
+    }
 }
 
 
@@ -89,10 +103,10 @@ void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
 	t = t - index; // where within  the segment
 
 	// indices store the points
-	int indices[4]; 
-	indices[0] = (index + POINT_COUNT-1)%POINT_COUNT;	
+	int indices[4];
+	indices[0] = (index + POINT_COUNT-1)%POINT_COUNT;
 	indices[1] = (indices[0]+1)%POINT_COUNT;
-	indices[2] = (indices[1]+1)%POINT_COUNT; 
+	indices[2] = (indices[1]+1)%POINT_COUNT;
 	indices[3] = (indices[2]+1)%POINT_COUNT;
 
 	getCatmullRomPoint(t, p[indices[0]], p[indices[1]], p[indices[2]], p[indices[3]], pos, deriv);
@@ -106,13 +120,13 @@ void changeSize(int w, int h) {
 	if(h == 0)
 		h = 1;
 
-	// compute window's aspect ratio 
+	// compute window's aspect ratio
 	float ratio = w * 1.0 / h;
 
 	// Reset the coordinate system before modifying
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	// Set the viewport to be the entire window
     glViewport(0, 0, w, h);
 
@@ -126,7 +140,18 @@ void changeSize(int w, int h) {
 
 void renderCatmullRomCurve() {
 
+    float pos[3];
+    float deriv[3];
+
 // draw curve using line segments with GL_LINE_LOOP
+
+    glBegin(GL_LINE_LOOP);
+    for(float gt=0; gt<1; gt+=0.01){
+        getGlobalCatmullRomPoint(gt,pos,deriv);
+        glVertex3f(pos[0],pos[1],pos[2]);
+
+    }
+    glEnd();
 }
 
 
@@ -138,7 +163,7 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	gluLookAt(camX, camY, camZ, 
+	gluLookAt(camX, camY, camZ,
 		      0.0,0.0,0.0,
 			  0.0f,1.0f,0.0f);
 
@@ -146,15 +171,41 @@ void renderScene(void) {
 
 	// apply transformations here
 	// ...
+    float pos[3];
+    float deriv[3];
+
+
+    getGlobalCatmullRomPoint(t,pos,deriv);
+
+    float x[3] = {deriv[0],deriv[1],deriv[2]};
+    float y[3];
+    float z[3];
+    float m[16];
+
+    glTranslatef(pos[0],pos[1],pos[2]);
+
+
+
+    normalize(x);
+    cross(x,prev_y,z);
+    normalize(z);
+    cross(z,x,y);
+    normalize(y);
+    memcpy(prev_y,y,3*sizeof(float));
+
+    buildRotMatrix(x,y,z,m);
+    glMultMatrixf(m);
+
 	glutWireTeapot(0.1);
 
 
 	glutSwapBuffers();
-	t+=0.00001;
+	//t+=0.00001;
+    t+= 0.001;
 }
 
 
-void processMouseButtons(int button, int state, int xx, int yy) 
+void processMouseButtons(int button, int state, int xx, int yy)
 {
 	if (state == GLUT_DOWN)  {
 		startX = xx;
@@ -172,7 +223,7 @@ void processMouseButtons(int button, int state, int xx, int yy)
 			beta += (yy - startY);
 		}
 		else if (tracking == 2) {
-			
+
 			r -= yy - startY;
 			if (r < 3)
 				r = 3.0;
@@ -228,8 +279,8 @@ int main(int argc, char **argv) {
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(320,320);
 	glutCreateWindow("CG@DI-UM");
-		
-// callback registration 
+
+// callback registration
 	glutDisplayFunc(renderScene);
 	glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
@@ -242,9 +293,9 @@ int main(int argc, char **argv) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
-// enter GLUT's main cycle 
+// enter GLUT's main cycle
 	glutMainLoop();
-	
+
 	return 1;
 }
 
