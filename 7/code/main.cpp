@@ -29,7 +29,10 @@ struct Point{
 
 };
 
-float alpha = 0.0f, beta = 0.0f;
+int alpha = 0, beta = 45, r = 50;
+float camX = 00, camY = 30, camZ = 40;
+int startX, startY, tracking = 0;
+
 float eyeX = 0, eyeY= 1.5, eyeZ = 0, centerX = 1, centerY =1.5, centerZ=1, upX=0.0, upY=1.0, upZ = 0.0,fov=45.0f,near=1.0f,far=1000.0f,
         dx=0, dy=0,dz=0,rx=0,ry=0,rz=0;
 
@@ -45,6 +48,74 @@ std::vector<float> vertexB;
 
 int reforest = 1;
 std::vector<Point> treesPositions;
+
+void processMouseButtons(int button, int state, int xx, int yy) {
+
+    if (state == GLUT_DOWN)  {
+        startX = xx;
+        startY = yy;
+        if (button == GLUT_LEFT_BUTTON)
+            tracking = 1;
+        else if (button == GLUT_RIGHT_BUTTON)
+            tracking = 2;
+        else
+            tracking = 0;
+    }
+    else if (state == GLUT_UP) {
+        if (tracking == 1) {
+            alpha += (xx - startX);
+            beta += (yy - startY);
+        }
+        else if (tracking == 2) {
+
+            r -= yy - startY;
+            if (r < 3)
+                r = 3.0;
+        }
+        tracking = 0;
+    }
+}
+
+
+void processMouseMotion(int xx, int yy) {
+
+    int deltaX, deltaY;
+    int alphaAux, betaAux;
+    int rAux;
+
+    if (!tracking)
+        return;
+
+    deltaX = xx - startX;
+    deltaY = yy - startY;
+
+    if (tracking == 1) {
+
+
+        alphaAux = alpha + deltaX;
+        betaAux = beta + deltaY;
+
+        if (betaAux > 85.0)
+            betaAux = 85.0;
+        else if (betaAux < -85.0)
+            betaAux = -85.0;
+
+        rAux = r;
+    }
+    else if (tracking == 2) {
+
+        alphaAux = alpha;
+        betaAux = beta;
+        rAux = r - deltaY;
+        if (rAux < 3)
+            rAux = 3;
+    }
+    camX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    camZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    camY = rAux * 							     sin(betaAux * 3.14 / 180.0);
+}
+
+
 
 
 double h(int i, int j) {
@@ -214,9 +285,9 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	gluLookAt(eyeX, eyeY, eyeZ,
-		      centerX,centerY,centerZ,
-			  0.0f,1.0f,0.0f);
+    gluLookAt(camX, camY, camZ,
+              0.0,0.0,0.0,
+              0.0f,1.0f,0.0f);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	drawTerrain();
@@ -327,9 +398,12 @@ int main(int argc, char **argv) {
     glutReshapeFunc(changeSize);
 
 // Callback registration for keyboard processing
-    glutSpecialFunc(processSpecialKeys);
+    //glutSpecialFunc(processSpecialKeys);
+    glutMouseFunc(processMouseButtons);
+    glutMotionFunc(processMouseMotion);
 
-    spherical2Cartesian();
+
+    //spherical2Cartesian();
     glewInit();
     glEnableClientState(GL_VERTEX_ARRAY);
 
