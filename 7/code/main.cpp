@@ -29,11 +29,11 @@ struct Point{
 
 };
 
-int alpha = 0, beta = 45, r = 50;
-float camX = 00, camY = 30, camZ = 40;
+float alpha = 45, beta = 0, r = 50;
+float camX = 0, camY = 30, camZ = 40, speed = 1.0f;
 int startX, startY, tracking = 0;
 
-float eyeX = 0, eyeY= 1.5, eyeZ = 0, centerX = 1, centerY =1.5, centerZ=1, upX=0.0, upY=1.0, upZ = 0.0,fov=45.0f,near=1.0f,far=1000.0f,
+float eyeX = 0, eyeY= 30, eyeZ = 40, centerX = 1, centerY =1.5, centerZ=1, upX=0.0, upY=1.0, upZ = 0.0,fov=45.0f,near=1.0f,far=1000.0f,
         dx=0, dy=0,dz=0,rx=0,ry=0,rz=0;
 
 unsigned int t;
@@ -141,12 +141,20 @@ float hf(float x, float z){
 
 
 void spherical2Cartesian(){
-    eyeY = hf(eyeX, eyeZ);
-    dx = sin(alpha);
-    dz = cos(alpha);
-    centerX = eyeX + dx;
-    centerZ = eyeY;
-    centerZ = eyeZ + dz;
+    eyeY = 2 + hf(eyeX, eyeZ);
+    centerX =  eyeX - cos(beta) * sin(alpha);
+    centerY =  eyeY;// - sin(beta);
+    centerZ =  eyeZ - cos(beta) * cos(alpha);
+    dx = centerX - eyeX;
+    dy = centerY - eyeY;
+    dz = centerZ - eyeZ;
+    float norm = sqrt(dx * dx + dy * dy + dz * dz);
+    dx /= norm;
+    dy /= norm;
+    dz /= norm;
+    rx = dy*upZ - dz*upY;
+    ry = dz*upX - dx*upZ;
+    rz = dx*upY - dy*upX;
 }
 
 
@@ -210,7 +218,7 @@ void drawTrees(int N){
     if(reforest){
         for(int i=0; i<N;i++){
             int angle = rand();
-            int radius = 35 + rand()%50;
+            int radius = 40 + rand()%70;
             float x = sin(angle)*radius;
             float z = cos(angle)*radius;
             float y = hf(x+ (th/2) ,z + (tw/2));
@@ -285,9 +293,9 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-    gluLookAt(camX, camY, camZ,
-              0.0,0.0,0.0,
-              0.0f,1.0f,0.0f);
+    gluLookAt(eyeX, eyeY, eyeZ,
+              centerX,centerY,centerZ,
+              upX,upY,upZ);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	drawTerrain();
@@ -312,19 +320,86 @@ void renderScene(void) {
 void processSpecialKeys(int key, int xx, int yy) {
 
     switch (key) {
+        case GLUT_KEY_LEFT:
+            alpha += 0.05;
+            break;
+
         case GLUT_KEY_RIGHT:
             alpha -= 0.05;
             break;
 
-        case GLUT_KEY_LEFT:
-            alpha += 0.05;
+        case GLUT_KEY_DOWN:
+            beta += 0.05f;
+            if (beta > 1.5f)
+                beta = 1.5f;
             break;
+
+        case GLUT_KEY_UP:
+            beta -= 0.05f;
+            if (beta < -1.5f)
+                beta = -1.5f;
+            break;
+
         default:
             break;
     }
     spherical2Cartesian();
+    //glutPostRedisplay();
 
 }
+
+void processKeys(unsigned char c, int xx, int yy) {
+    switch (c) {
+        case 'w':
+            centerX += speed*dx;
+            eyeX += speed*dx;
+            //centerY += speed*dy;
+            //eyeY += speed*dy;
+            centerZ += speed*dz;
+            eyeZ += speed*dz;
+            break;
+        case 's':
+            centerX -= speed*dx;
+            eyeX -= speed*dx;
+            //centerY -= speed*dy;
+            //eyeY -= speed*dy;
+            centerZ -= speed*dz;
+            eyeZ -= speed*dz;
+            break;
+        case 'a':
+            centerX -= speed*rx;
+            eyeX -= speed*rx;
+            //centerY -= speed*ry;
+            //eyeY -= speed*ry;
+            centerZ -= speed*rz;
+            eyeZ -= speed*rz;
+            break;
+        case 'd':
+            centerX += speed*rx;
+            eyeX += speed*rx;
+            centerY += speed*ry;
+            eyeY += speed*ry;
+            centerZ += speed*rz;
+            eyeZ += speed*rz;
+            break;
+        case '+':
+            speed *= 2;
+            if (speed > 64.0f) speed = 64.0f;
+            break;
+        case '-':
+            speed /= 2;
+            if (speed < 0.1f) speed = 0.1f;
+            break;
+
+    }
+
+    spherical2Cartesian();
+    //glutPostRedisplay();
+
+
+}
+
+
 
 
 
@@ -384,6 +459,7 @@ void init() {
 
 int main(int argc, char **argv) {
 
+    //
 // init GLUT and the window
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
@@ -399,8 +475,10 @@ int main(int argc, char **argv) {
 
 // Callback registration for keyboard processing
     //glutSpecialFunc(processSpecialKeys);
-    glutMouseFunc(processMouseButtons);
-    glutMotionFunc(processMouseMotion);
+    //glutMouseFunc(processMouseButtons);
+    //glutMotionFunc(processMouseMotion);
+    glutKeyboardFunc(processKeys);
+    glutSpecialFunc(processSpecialKeys);
 
 
     //spherical2Cartesian();
@@ -410,6 +488,8 @@ int main(int argc, char **argv) {
     ilInit();
 
     init();
+
+    spherical2Cartesian();
 
 // enter GLUT's main cycle
     glutMainLoop();
