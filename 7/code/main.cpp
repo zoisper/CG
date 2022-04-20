@@ -29,12 +29,11 @@ struct Point{
 
 };
 
-float alpha = 45, beta = 0, r = 50;
-float camX = 0, camY = 30, camZ = 40, speed = 1.0f;
 int startX, startY, tracking = 0;
 
-float eyeX = 0, eyeY= 30, eyeZ = 40, centerX = 1, centerY =1.5, centerZ=1, upX=0.0, upY=1.0, upZ = 0.0,fov=45.0f,near=1.0f,far=1000.0f,
-        dx=0, dy=0,dz=0,rx=0,ry=0,rz=0;
+float r = 0, fov = 45.0f, near = 1.0f, far = 1000.0f, alpha = 0, beta = 0,
+eyeX = 10, eyeY, eyeZ = 10, centerX, centerY, centerZ, my_height = 7,
+upX = 0.0, upY = 1.0, upZ = 0.0, dx, dy, dz, rx, ry, rz;
 
 unsigned int t;
 int tw, th;
@@ -49,73 +48,6 @@ std::vector<float> vertexB;
 int reforest = 1;
 std::vector<Point> treesPositions;
 
-void processMouseButtons(int button, int state, int xx, int yy) {
-
-    if (state == GLUT_DOWN)  {
-        startX = xx;
-        startY = yy;
-        if (button == GLUT_LEFT_BUTTON)
-            tracking = 1;
-        else if (button == GLUT_RIGHT_BUTTON)
-            tracking = 2;
-        else
-            tracking = 0;
-    }
-    else if (state == GLUT_UP) {
-        if (tracking == 1) {
-            alpha += (xx - startX);
-            beta += (yy - startY);
-        }
-        else if (tracking == 2) {
-
-            r -= yy - startY;
-            if (r < 3)
-                r = 3.0;
-        }
-        tracking = 0;
-    }
-}
-
-
-void processMouseMotion(int xx, int yy) {
-
-    int deltaX, deltaY;
-    int alphaAux, betaAux;
-    int rAux;
-
-    if (!tracking)
-        return;
-
-    deltaX = xx - startX;
-    deltaY = yy - startY;
-
-    if (tracking == 1) {
-
-
-        alphaAux = alpha + deltaX;
-        betaAux = beta + deltaY;
-
-        if (betaAux > 85.0)
-            betaAux = 85.0;
-        else if (betaAux < -85.0)
-            betaAux = -85.0;
-
-        rAux = r;
-    }
-    else if (tracking == 2) {
-
-        alphaAux = alpha;
-        betaAux = beta;
-        rAux = r - deltaY;
-        if (rAux < 3)
-            rAux = 3;
-    }
-    camX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-    camZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-    camY = rAux * 							     sin(betaAux * 3.14 / 180.0);
-}
-
-
 
 
 double h(int i, int j) {
@@ -125,6 +57,8 @@ double h(int i, int j) {
 }
 
 float hf(float x, float z){
+    x+= th/2;
+    z+= tw/2;
     float x1 = floor(x);
     float x2 = x1 + 1;
     float z1 = floor(z);
@@ -141,12 +75,12 @@ float hf(float x, float z){
 
 
 void spherical2Cartesian(){
-    eyeY = 2 + hf(eyeX, eyeZ);
+    eyeY = my_height + hf(eyeX ,eyeZ );
     centerX =  eyeX - cos(beta) * sin(alpha);
-    centerY =  eyeY;// - sin(beta);
+    centerY =  eyeY - sin(beta);
     centerZ =  eyeZ - cos(beta) * cos(alpha);
     dx = centerX - eyeX;
-    dy = centerY - eyeY;
+    dy = 0;//centerY - eyeY;
     dz = centerZ - eyeZ;
     float norm = sqrt(dx * dx + dy * dy + dz * dz);
     dx /= norm;
@@ -176,7 +110,7 @@ void changeSize(int w, int h) {
     glViewport(0, 0, w, h);
 
 	// Set the correct perspective
-	gluPerspective(45,ratio,1,1000);
+	gluPerspective(fov,ratio,near,far);
 
 	// return to the model view matrix mode
 	glMatrixMode(GL_MODELVIEW);
@@ -221,15 +155,14 @@ void drawTrees(int N){
             int radius = 40 + rand()%70;
             float x = sin(angle)*radius;
             float z = cos(angle)*radius;
-            float y = hf(x+ (th/2) ,z + (tw/2));
+            float y = hf(x ,z );
 
             treesPositions.push_back(Point(x, y, z));
         }
 
         reforest = 0;
     }
-    //glPushMatrix();
-    //glTranslatef(-th/2,0,-tw/2);
+
     for(Point p : treesPositions){
         glPushMatrix();
         glTranslatef(p.x,p.y,p.z);
@@ -344,61 +277,114 @@ void processSpecialKeys(int key, int xx, int yy) {
             break;
     }
     spherical2Cartesian();
-    //glutPostRedisplay();
-
 }
 
 void processKeys(unsigned char c, int xx, int yy) {
     switch (c) {
         case 'w':
-            centerX += speed*dx;
-            eyeX += speed*dx;
+            centerX += dx;
+            eyeX += dx;
             //centerY += speed*dy;
             //eyeY += speed*dy;
-            centerZ += speed*dz;
-            eyeZ += speed*dz;
+            centerZ += dz;
+            eyeZ += dz;
             break;
         case 's':
-            centerX -= speed*dx;
-            eyeX -= speed*dx;
+            centerX -= dx;
+            eyeX -= dx;
             //centerY -= speed*dy;
             //eyeY -= speed*dy;
-            centerZ -= speed*dz;
-            eyeZ -= speed*dz;
+            centerZ -= dz;
+            eyeZ -= dz;
             break;
         case 'a':
-            centerX -= speed*rx;
-            eyeX -= speed*rx;
+            centerX -= rx;
+            eyeX -= rx;
             //centerY -= speed*ry;
             //eyeY -= speed*ry;
-            centerZ -= speed*rz;
-            eyeZ -= speed*rz;
+            centerZ -= rz;
+            eyeZ -= rz;
             break;
         case 'd':
-            centerX += speed*rx;
-            eyeX += speed*rx;
-            centerY += speed*ry;
-            eyeY += speed*ry;
-            centerZ += speed*rz;
-            eyeZ += speed*rz;
-            break;
-        case '+':
-            speed *= 2;
-            if (speed > 64.0f) speed = 64.0f;
-            break;
-        case '-':
-            speed /= 2;
-            if (speed < 0.1f) speed = 0.1f;
+            centerX += rx;
+            eyeX += rx;
+            centerY += ry;
+            eyeY += ry;
+            centerZ += rz;
+            eyeZ += rz;
             break;
 
     }
 
     spherical2Cartesian();
-    //glutPostRedisplay();
-
 
 }
 
+void processMouseButtons(int button, int state, int xx, int yy) {
+
+    if (state == GLUT_DOWN)  {
+        startX = xx;
+        startY = yy;
+        if (button == GLUT_LEFT_BUTTON)
+            tracking = 1;
+        else if (button == GLUT_RIGHT_BUTTON)
+            tracking = 2;
+        else
+            tracking = 0;
+    }
+    else if (state == GLUT_UP) {
+        if (tracking == 1) {
+            alpha += (xx - startX);
+            beta += (yy - startY);
+        }
+        else if (tracking == 2) {
+
+            r -= yy - startY;
+            if (r < 3)
+                r = 3.0;
+        }
+        tracking = 0;
+    }
+}
+
+
+void processMouseMotion(int xx, int yy) {
+
+    int deltaX, deltaY;
+    int alphaAux, betaAux;
+    int rAux;
+
+    if (!tracking)
+        return;
+
+    deltaX = xx - startX;
+    deltaY = yy - startY;
+
+    if (tracking == 1) {
+
+
+        alphaAux = alpha + deltaX;
+        betaAux = beta + deltaY;
+
+        if (betaAux > 85.0)
+            betaAux = 85.0;
+        else if (betaAux < -85.0)
+            betaAux = -85.0;
+
+        rAux = r;
+    }
+    else if (tracking == 2) {
+
+        alphaAux = alpha;
+        betaAux = beta;
+        rAux = r - deltaY;
+        if (rAux < 3)
+            rAux = 3;
+    }
+    eyeX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    eyeZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
+    eyeY = rAux * 							     sin(betaAux * 3.14 / 180.0);
+}
 
 
 
@@ -474,9 +460,8 @@ int main(int argc, char **argv) {
     glutReshapeFunc(changeSize);
 
 // Callback registration for keyboard processing
-    //glutSpecialFunc(processSpecialKeys);
-    //glutMouseFunc(processMouseButtons);
-    //glutMotionFunc(processMouseMotion);
+    glutMouseFunc(processMouseButtons);
+    glutMotionFunc(processMouseMotion);
     glutKeyboardFunc(processKeys);
     glutSpecialFunc(processSpecialKeys);
 
