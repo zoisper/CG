@@ -15,7 +15,8 @@
 float alfa = 0.0f, beta = 0.0f, radius = 5.0f;
 float camX, camY, camZ;
 
-GLuint vertexCount, vertices;
+GLuint vertexCount, vertices, normais, buffers[2];
+
 
 int timebase = 0, frame = 0;
 
@@ -56,9 +57,10 @@ void changeSize(int w, int h) {
 
 void prepareCilinder(float height, float radius, int sides) {
 
-	float *v;
+	float *v,*n;
 
 	v = (float *)malloc(sizeof(float) * 4 * 3 * 3 * sides);
+    n = (float *)malloc(sizeof(float) * 4 * 3 * 3 * sides);
 
 	int vertex = 0;
 	float delta = 2.0f * _PI_ / sides;
@@ -70,32 +72,57 @@ void prepareCilinder(float height, float radius, int sides) {
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = 0.0f;
 
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = 1.0f;
+        n[vertex*3 + 2] = 0.0f;
+
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( i * delta);
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = radius * cos( i * delta);
 
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = 1.0f;
+        n[vertex*3 + 2] = 0.0f;
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( (i+1) * delta);
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = radius * cos( (i+1) * delta);
+
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = 1.0f;
+        n[vertex*3 + 2] = 0.0f;
 
 		// body
-		// triângulo 1
+		// triï¿½ngulo 1
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( (i+1) * delta);
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = radius * cos( (i+1) * delta);
 
+        n[vertex*3 + 0] = sin( (i+1) * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( (i+1) * delta);
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( i * delta);
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = radius * cos( i * delta);
+
+        n[vertex*3 + 0] = sin( i * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( i * delta);
 
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( i * delta);
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = radius * cos( i * delta);
+
+        n[vertex*3 + 0] = sin( i * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( i * delta);
 
 		// triangle 2
 		vertex++;
@@ -103,15 +130,27 @@ void prepareCilinder(float height, float radius, int sides) {
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = radius * cos( (i+1) * delta);
 
+        n[vertex*3 + 0] = sin( (i+1) * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( (i+1) * delta);
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( (i+1) * delta);
 		v[vertex*3 + 1] = height /2.0f;
 		v[vertex*3 + 2] = radius * cos( (i+1) * delta);
 
+        n[vertex*3 + 0] = sin( (i+1) * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( (i+1) * delta);
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( i * delta);
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = radius * cos( i * delta);
+
+        n[vertex*3 + 0] = sin( i * delta);
+        n[vertex*3 + 1] = 0.0f;
+        n[vertex*3 + 2] = cos( i * delta);
 
 		// base
 		// central point
@@ -120,24 +159,42 @@ void prepareCilinder(float height, float radius, int sides) {
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = 0.0f;
 
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = -1.0f;
+        n[vertex*3 + 2] = 0.0f;
+
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( (i+1) * delta);
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = radius * cos( (i+1) * delta);
+
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = -1.0f;
+        n[vertex*3 + 2] = 0.0f;
 
 		vertex++;
 		v[vertex*3 + 0] = radius * sin( i * delta);
 		v[vertex*3 + 1] = -height /2.0f;
 		v[vertex*3 + 2] = radius * cos( i * delta);
 
+        n[vertex*3 + 0] = 0.0f;
+        n[vertex*3 + 1] = -1.0f;
+        n[vertex*3 + 2] = 0.0f;
+
 		vertex++;
 	}
 
 	vertexCount = vertex;
 
-	glGenBuffers(1, &vertices);
+	glGenBuffers(2, buffers);
+    vertices = buffers[0];
+    normais = buffers[1];
+
 	glBindBuffer(GL_ARRAY_BUFFER,vertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexCount * 3, v,     GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER,normais);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexCount * 3, n,GL_STATIC_DRAW);
 
 	free(v);
 
@@ -149,6 +206,9 @@ void drawCilinder() {
 	glBindBuffer(GL_ARRAY_BUFFER,vertices);
 	glVertexPointer(3,GL_FLOAT,0,0);
 
+    glBindBuffer(GL_ARRAY_BUFFER,normais);
+    glNormalPointer(GL_FLOAT,0,0);
+
 	glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
 
@@ -156,7 +216,17 @@ void drawCilinder() {
 void renderScene(void) {
 
 	float pos[4] = {1.0, 1.0, 1.0, 0.0};
-	float fps;
+    glLightfv(GL_LIGHT0,GL_POSITION, pos);
+
+    float dark[] = { 0.2, 0.2, 0.2, 1.0 };
+    float white[] = { 0.8, 0.8, 0.8, 1.0 };
+    float red[] = { 0.8, 0.2, 0.2, 1.0 };
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT, GL_SHININESS, 128);
+
+    float fps;
 	int time;
 	char s[64];
 
@@ -229,11 +299,27 @@ void initGL() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
+    float dark[4] = {0.2, 0.2, 0.2, 1.0};
+    float white[4] = {1.0, 1.0, 1.0, 1.0};
+    float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+// light colors
+    glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white);
+
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
+
 // init
 	sphericalToCartesian();
 	glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
 
 	prepareCilinder(2,1,16);
+
+
 }
 
 
