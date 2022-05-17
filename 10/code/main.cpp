@@ -139,6 +139,29 @@ void normalize(float *a) {
 void computeNormal(int i, int j) {
 
 	// fill the normal vector with the normal for vertex at grid location (i,j)
+    float p1[3], p2[3], p3[3], p4[3], v1[3], v2[3], n[3];
+    p1[0] = i; p1[1] = h(i,j-1); p1[2] = j-1;
+    p2[0] = i; p2[1] = h(i,j+1); p2[2] = j+1;
+    p3[0] = i-1; p3[1] = h(i-1,j); p3[2] = j;
+    p4[0] = i+1; p4[1] = h(i+1,j); p4[2] = j;
+
+    v1[0] = p2[0] - p1[0];
+    v1[1] = p2[1] - p1[1];
+    v1[2] = p2[2] - p1[2];
+
+    v2[0] = p4[0] - p3[0];
+    v2[1] = p4[1] - p3[1];
+    v2[2] = p4[2] - p3[2];
+
+    cross(v1, v2, n);
+    normalize(n);
+
+    for(int k=0; k< 3; k++)
+        normal.push_back(n[k]);
+    texCoord.push_back(i);
+    texCoord.push_back(j);
+
+
 
 }
 
@@ -334,7 +357,7 @@ void renderScene(void) {
 
 
 
-// escrever função de processamento do teclado
+// escrever funï¿½ï¿½o de processamento do teclado
 
 void processKeys(unsigned char key, int xx, int yy) {
 
@@ -467,7 +490,7 @@ void init() {
 
 int main(int argc, char **argv) {
 
-// inicialização
+// inicializaï¿½ï¿½o
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);
@@ -475,12 +498,12 @@ int main(int argc, char **argv) {
 	glutCreateWindow("CG@DI-UM");
 		
 
-// registo de funções 
+// registo de funï¿½ï¿½es 
 	glutDisplayFunc(renderScene);
 	glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
 
-// pôr aqui registo da funções do teclado e rato
+// pï¿½r aqui registo da funï¿½ï¿½es do teclado e rato
 
 	glutKeyboardFunc(processKeys);
 	glutMouseFunc(processMouseButtons);
